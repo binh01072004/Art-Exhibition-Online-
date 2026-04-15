@@ -239,11 +239,31 @@ function ExhibitionGallery() {
         <meshStandardMaterial color="#e0e0e0" />
       </mesh>
 
-      {/* --- TƯỜNG CUỐI HÀNH LANG --- */}
-      <mesh position={[0, 2.5, -255]}>
-        <boxGeometry args={[10, 5, 0.1]} />
-        <meshStandardMaterial color="#e0e0e0" />
-      </mesh>
+      {/* --- TƯỜNG CUỐI HÀNH LANG & LỜI CHÀO TẠM BIỆT --- */}
+      <group position={[0, 2.5, -255]}>
+        {/* Bức tường đen */}
+        <mesh>
+          <boxGeometry args={[10, 5, 0.1]} />
+          <meshStandardMaterial color="#151515" />
+        </mesh>
+
+        {/* Đèn rọi vàng hắt vào chữ cho lung linh */}
+        <pointLight position={[0, 1, 2]} intensity={1.5} distance={10} color="#f8f885" />
+
+        {/* Dòng chữ Cảm ơn */}
+        <Text 
+          position={[0, 0.5, 0.1]}     // Nhô ra trước 10cm để không bị chìm vào tường
+          fontSize={0.35}              // Kích thước chữ to vừa phải
+          color="white" 
+          anchorX="center" 
+          anchorY="middle"
+          maxWidth={8}                 // Dàn đều chữ trong phạm vi 8m (tường rộng 10m)
+          textAlign="center"
+          lineHeight={1.5}             // Khoảng cách dòng thoáng mắt
+        >
+          Cảm ơn các bạn đã tham gia trải nghiệm!{"\n"}Hy vọng các bạn đã có những phút giây tuyệt vời cùng lịch sử.
+        </Text>
+      </group>
 
       {/* Tường trái */}
       <mesh position={[-5, 2.5, -130]}>
