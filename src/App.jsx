@@ -1,4 +1,4 @@
-import { Suspense, useState, useEffect } from 'react'
+import { Suspense, useState, useEffect, useRef } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { PointerLockControls, Sky, useTexture, Text, Html } from '@react-three/drei'
 import * as THREE from 'three'
@@ -244,7 +244,7 @@ function ExhibitionGallery() {
         {/* Bức tường đen */}
         <mesh>
           <boxGeometry args={[10, 5, 0.1]} />
-          <meshStandardMaterial color="#151515" />
+          <meshStandardMaterial color="#e0e0e0" />
         </mesh>
 
         {/* Đèn rọi vàng hắt vào chữ cho lung linh */}
@@ -281,6 +281,103 @@ function ExhibitionGallery() {
   )
 }
 
+// --- BỘ PHÁT NHẠC NỀN ---
+function MusicPlayer() {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [volume, setVolume] = useState(0.5);
+  const [showList, setShowList] = useState(false);
+  const [showVol, setShowVol] = useState(false);
+  const [trackIndex, setTrackIndex] = useState(0);
+  const audioRef = useRef(null);
+
+  // Danh sách nhạc (Anh nhớ sửa tên file cho khớp với file thật trong thư mục public/audio nhé)
+  const playlist = [
+    { title: "Còn Gì Đẹp Hơn", url: "/audio/1.mp3" },
+    { title: "Quốc Ca", url: "/audio/2.mp3" },
+    { title: "Như Có Bác Hồ Trong Ngày Vui Đại Thắng", url: "/audio/3.mp3" },
+    { title: "Nối Vòng Tay Lớn", url: "/audio/4.mp3" },
+  ];
+
+  // Cập nhật âm lượng khi kéo thanh trượt
+  useEffect(() => {
+    if (audioRef.current) audioRef.current.volume = volume;
+  }, [volume]);
+
+  // Đổi bài hát
+  useEffect(() => {
+    if (audioRef.current && isPlaying) {
+      audioRef.current.play().catch(e => console.log("Đợi người dùng tương tác..."));
+    }
+  }, [trackIndex]);
+
+  const togglePlay = () => {
+    if (isPlaying) audioRef.current.pause();
+    else audioRef.current.play();
+    setIsPlaying(!isPlaying);
+  };
+
+  return (
+    <div style={{ position: 'absolute', bottom: 20, right: 20, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', fontFamily: 'sans-serif', zIndex: 10 }}
+
+    // --- THÊM 3 DÒNG LÁ CHẮN NÀY VÀO ĐÂY ---
+      onPointerDown={(e) => e.stopPropagation()}
+      onPointerUp={(e) => e.stopPropagation()}
+      onClick={(e) => e.stopPropagation()}
+      // --------------------------------------
+
+    >
+      
+      {/* Thẻ audio ẩn */}
+      <audio ref={audioRef} src={playlist[trackIndex].url} loop onEnded={() => setTrackIndex((prev) => (prev + 1) % playlist.length)} />
+
+      {/* Menu Danh sách nhạc (Hiện/Ẩn) */}
+      {showList && (
+        <div style={{ background: 'rgba(0,0,0,0.8)', padding: '10px', borderRadius: '8px', color: 'white', marginBottom: '10px', width: '200px' }}>
+          <h4 style={{ margin: '0 0 10px 0', borderBottom: '1px solid #555', paddingBottom: '5px' }}>Danh sách nhạc</h4>
+          {playlist.map((track, i) => (
+            <div 
+              key={i} 
+              onClick={() => { setTrackIndex(i); setIsPlaying(true); setShowList(false); }}
+              style={{ padding: '5px', cursor: 'pointer', background: i === trackIndex ? '#444' : 'transparent', borderRadius: '4px', fontSize: '13px' }}
+            >
+              {i === trackIndex ? '▶ ' : ''}{track.title}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Thanh chỉnh âm lượng (Hiện/Ẩn) */}
+      {showVol && (
+        <div style={{ background: 'rgba(0,0,0,0.8)', padding: '10px', borderRadius: '8px', marginBottom: '10px' }}>
+          <input 
+            type="range" min="0" max="1" step="0.05" value={volume} 
+            onChange={(e) => setVolume(parseFloat(e.target.value))} 
+            style={{ cursor: 'pointer' }}
+          />
+        </div>
+      )}
+
+      {/* Thanh công cụ chính */}
+      <div style={{ display: 'flex', gap: '10px', background: 'rgba(255,255,255,0.1)', padding: '10px 15px', borderRadius: '30px', backdropFilter: 'blur(5px)', color: 'white' }}>
+        {/* Nút Play/Pause */}
+        <span style={{ cursor: 'pointer', fontSize: '20px' }} onClick={togglePlay} title="Phát/Dừng">
+          {isPlaying ? '⏸' : '▶'}
+        </span>
+        
+        {/* Nút Danh sách nhạc */}
+        <span style={{ cursor: 'pointer', fontSize: '20px' }} onClick={() => { setShowList(!showList); setShowVol(false); }} title="Danh sách nhạc">
+          🎵
+        </span>
+
+        {/* Nút Âm lượng */}
+        <span style={{ cursor: 'pointer', fontSize: '20px' }} onClick={() => { setShowVol(!showVol); setShowList(false); }} title="Âm lượng">
+          🔊
+        </span>
+      </div>
+    </div>
+  )
+}
+
 // 5. App Chính
 export default function App() {
   return (
@@ -290,7 +387,7 @@ export default function App() {
 
           <ambientLight intensity={1} />
           <directionalLight position={[10, 10, 5]} intensity={1.2} />
-{/*          <Sky sunPosition={[100, 20, 100]} /> */}
+{/* <Sky sunPosition={[100, 20, 100]} /> */}
           <color attach="background" args={['#050505']} />
           <fog attach="fog" args={['#050505', 0, 50]} />
           <ExhibitionGallery />
@@ -299,12 +396,17 @@ export default function App() {
         </Suspense>
       </Canvas>
       
+      {/* BẢNG HƯỚNG DẪN */}
       <div style={{ position: 'absolute', top: 20, left: 20, color: 'white', background: 'rgba(0,0,0,0.6)', padding: '15px', borderRadius: '8px', fontFamily: 'sans-serif' }}>
         <h3 style={{ margin: '0 0 10px 0' }}>Triển lãm Hồ Chí Minh</h3>
         <p style={{ margin: '5px 0' }}>🖱️ <b>Click chuột</b> vào màn hình để bắt đầu</p>
         <p style={{ margin: '5px 0' }}>⌨️ Dùng <b>W, A, S, D</b> để di chuyển</p>
         <p style={{ margin: '5px 0' }}>⌨️ Nhấn <b>ESC</b> để thoát chuột</p>
       </div>
+
+      {/* GỌI BỘ PHÁT NHẠC RA ĐÂY (Nổi lên trên 3D, ở góc dưới bên phải) */}
+      <MusicPlayer />
+      
     </div>
   )
-} 
+}
